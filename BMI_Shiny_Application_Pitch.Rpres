@@ -1,0 +1,48 @@
+BMI_Shiny_Application_Pitch
+========================================================
+author: Alison Hawthorne
+date: 13.06.2016
+
+Why This App?
+========================================================
+
+Obesity is now regarded as one of the most important health issues to address in the United Kingdom and many other countries. It is linked to many other health problems such as heart disease and diabetes.
+
+My application is a step in raising self-awareness of weight issues by allowing the user to understand their Body Mass Index and whether that is healthy or unhealthy.
+
+Benefits:
+========================================================
+
+Although there are other BMI tools on the web, you should use mine because it is:
+
+**Flexible**
+- The user can choose which units to use to enter height and weight
+
+**Visual**
+- A graph will show the user their selection against a graph of 2107 other people
+
+**Easy to Use**
+- The application is simple and self-explanatory
+
+The Calculation
+========================================================
+The Calculation for BMI takes the height entered by the user and converts this into metres, takes their weight and converts into kg and then divides the weight by metres squared.
+Eg. A height of 65 Inches and a weight of 134lb gives the following BMI
+
+```{r}
+        x <- 65
+        y <- 134
+        bmi <- (y / 2.20462) / (x * 0.0254)^2
+        bmi 
+```
+
+BMI Graph of Sample Population
+========================================================
+
+```{r, echo=FALSE}
+        library(mixsmsn)
+        data(bmi)
+        hist(bmi$bmi, breaks = 20, main = "BMI by number of people in Sample",
+                                       xlab = "bmi", ylab = "Number of People", col="light blue")
+        
+```

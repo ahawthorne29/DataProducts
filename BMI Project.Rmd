@@ -1,0 +1,166 @@
+---
+title: "BMI Project Help File"
+author: "Alison Hawthorne"
+date: "11 June 2016"
+output: html_document
+---
+
+My Shiny BMI Project application is an application to calculate a person's Body Mass Index for them and optionally display this on a graph alongside a sample of 2107 people taken from the MIXSMSN library, data(bmi).
+
+The user can use radio buttons to select whether they want to enter their weight in Pounds (lb) or Kilogramms (Kg). This will reveal a conditional Panel that will allow them to enter in an appropriate range.
+
+Likewise, a similar panel is revealed for height in either Inches or Metres.
+
+The app converts their input to metres and kg and then calculates the BMI based on the standard calculation of weight divided by height divided by height again.
+
+A diagnosis on whether that is underweight, healthy, overweight or obese is then provided, based on the standard definitions.
+
+The user may also reveal a graph using radio buttons. This graph provides a histogram of the BMIs of the 2107 people sampled in the bmi data from the MIXSMSN library. If the user has selected a height and weight then the graph will display the selected BMI on the graph via a red vertical line.
+
+I have copied ui.R and server.R below for examination:
+
+
+```{r eval=FALSE}
+        library(shiny)
+        ui <- fluidPage(
+                
+                        headerPanel('Alison Hawthorne Project'),
+                        br(),
+                        h2("Body Mass Index Analysis"),
+                        
+                        sidebarPanel(
+                                ##attain input values to calculate BMI
+                                radioButtons("pick1", "How would you like to enter your weight?", 
+                                             c("Kilos (Kg)" = "kg", "Pounds (Lb)" = "lb", "None Selected" = "none"),
+                                             selected = "none"),
+                                
+                                conditionalPanel(
+                                        condition = "input.pick1 == 'kg'",
+                                        numericInput("w", "Enter your weight in kg", min = 30, max = 300, value = 70)),
+                                conditionalPanel(
+                                        condition = "input.pick1 == 'lb'",
+                                        numericInput("l", "Enter your weight in lb", min = 60, max = 500, value = 150)
+                                ),
+                                br(),
+                                
+                                radioButtons("pick2", "How would you like to enter your height?", 
+                                             c("Centimetres (Cm)" = "cm", "Inches (In)" = "in", "None Selected" = "none"),
+                                             selected = "none"),
+                                
+                                conditionalPanel(
+                                        condition = "input.pick2 == 'cm'",
+                                        numericInput("h", "Enter your height in centimetres", min = 80, max = 240, value = 165)
+                                ),
+                                conditionalPanel(
+                                        condition = "input.pick2 == 'In'",
+                                        numericInput("i", "Enter your height in inches", min = 36, max = 90, value = 66)
+                                ),
+                                br(),
+                                radioButtons("rad", "Would you like to see a graph?", c("Yes Please" = "Y", "No thanks" = "N"),
+                                             selected = "N"),
+                                br()
+                        ),
+                        mainPanel(
+                                ##present BMI calculation
+                                p("Body mass index (BMI) is measure of body fat based on height and weight. The higher the BMI, the greater the risk of some diseases, including high blood pressure, coronary artery disease, stroke, osteoarthritis, some cancers, and type 2 diabetes."),
+                                h3('For a Body Mass Index of:'),
+                                verbatimTextOutput("nText"),
+                                h3('This value of BMI suggests the person may be:'),
+                                verbatimTextOutput("nRad"),
+                                br()
+                        ),
+        
+                        conditionalPanel(
+                                condition = "input.rad == 'Y'",
+                                ##if the user selects the graph, present the BMI graph
+                                h3("A graph of the BMIs of 2107 people from 2013"),
+                                h4("Selected BMI is marked in the sample in red for Comparison to Sample"),
+                                plotOutput("bmi")
+                        )
+        )
+
+```
+
+
+
+```{r, eval=FALSE}
+#load the libraries and data we need
+library(mixsmsn)
+data("bmi")
+
+
+shinyServer(function(input, output) {
+        
+        #calculate the BMI (weight in kg divided by height in metres, divided by height again)
+        #perform conversions as needed dependent on input
+        output$nText <- renderText({
+                if (input$pick1 == "none") {"None Selected"}
+                else if (input$pick2 == "none") {"None Selected"}
+                else if (input$pick1 == "kg" & input$pick2 == "cm")
+                        {input$w / (input$h / 100)^2}
+                else if (input$pick1 == "kg" & input$pick2 == "in")
+                        {input$w / (input$i * 0.0254)^2}
+                else if (input$pick1 == "lb" & input$pick2 == "in")
+                        {(input$l / 2.20462) / (input$i * 0.0254)^2}
+                else if (input$pick1 == "lb" & input$pick2 == "cm")
+                        {(input$l / 2.20462) / (input$h / 100)^2}
+                }
+             )
+        
+        #output diagnosis of BMI as suggested by wikipedia
+        #perform conversions as needed dependent on input
+        output$nRad <- renderText({
+                if (input$pick1 == "none") {"None Selected"}
+                else if (input$pick2 == "none") {"None Selected"}
+                else if (input$pick1 == "kg" & input$pick2 == "cm") 
+                {
+                        if (((input$w / (input$h / 100)^2)) < 18.5) {"Underweight"}
+                        else if ((input$w / (input$h / 100)^2) <= 25) {"Healthy weight"}
+                        else if ((input$w / (input$h / 100)^2) < 30) {"Overweight"}
+                        else {"Obese"}
+                }
+                else if (input$pick1 == "kg" & input$pick2 == "in")
+                {
+                      if ((input$w / (input$i * 0.0254)^2) < 18.5) {"Underweight"}
+                      else if ((input$w / (input$i * 0.0254)^2) <= 25) {"Healthy weight"}
+                      else if ((input$w / (input$i * 0.0254)^2) < 30) {"Overweight"}
+                      else {"Obese"}
+                }
+                
+                else if (input$pick1 == "lb" & input$pick2 == "in")
+                {
+                        if (((input$l / 2.20462) / (input$i * 0.0254)^2) < 18.5) {"Underweight"}
+                        else if (((input$l / 2.20462) / (input$i * 0.0254)^2) <= 25) {"Healthy weight"}
+                        else if (((input$l / 2.20462) / (input$i * 0.0254)^2) < 30) {"Overweight"}
+                        else {"Obese"}
+                }
+                
+                else if (input$pick1 == "lb" & input$pick2 == "cm")
+                {
+                        if (((input$l / 2.20462) / (input$h / 100)^2) < 18.5) {"Underweight"}
+                        else if (((input$l / 2.20462) / (input$h / 100)^2) <= 25) {"Healthy weight"}
+                        else if (((input$l / 2.20462) / (input$h / 100)^2) < 30) {"Overweight"}
+                        else {"Obese"}
+                        
+                }
+                
+                
+        })
+        
+        #draw a histogram to show a sample population of BMIs
+        output$bmi <- renderPlot({hist(bmi$bmi, breaks = 20, main = "BMI by number of people in Sample",
+                                       xlab = "bmi", ylab = "Number of People", col="light blue")
+               #add a line for the BMI selected by the user (if selected)
+                if (input$pick1 == "kg" & input$pick2 == "cm")
+                        {abline(v=(input$w / (input$h / 100)^2), col="red")}
+                else if (input$pick1 == "kg" & input$pick2 == "in")
+                        {abline(v=(input$w / (input$i * 0.0254)^2), col="red")}
+                else if (input$pick1 == "lb" & input$pick2 == "in")
+                        {abline(v=((input$l / 2.20462) / (input$i * 0.0254)^2), col="red")}
+                else if (input$pick1 == "lb" & input$pick2 == "cm")
+                        {abline(v=((input$l / 2.20462) / (input$h / 100)^2), col="red")}
+                 })
+
+})
+```
+
